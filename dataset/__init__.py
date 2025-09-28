@@ -3,6 +3,24 @@ from torchvision import datasets, transforms
 import torch 
 import os 
 
+def build_transform(dataset):
+    if dataset == "CIFAR10":
+        mean, std = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
+    elif dataset == "MNIST":
+        mean, std = (0.5,), (0.5,)
+    else:
+        raise NotImplementedError()
+
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std)
+        ])
+    mean = torch.as_tensor(mean)
+    std = torch.as_tensor(std)
+    detransform = transforms.Normalize((-mean / std).tolist(), (1.0 / std).tolist()) # you can use detransform to recover the image
+    
+    return transform, detransform
+
 def build_init_data(dataname, download, dataset_path):
     if dataname == 'MNIST':
         train_data = datasets.MNIST(root=dataset_path, train=True, download=download)
@@ -18,8 +36,10 @@ def build_poisoned_training_set(is_train, args):
 
     if args.dataset == 'CIFAR10':
         trainset = CIFAR10Poison(args, args.data_path, train=is_train, download=True, transform=transform)
+        # 分类数量
         nb_classes = 10
     elif args.dataset == 'MNIST':
+        # 这里的trainset 还没有添加触发器呢  MNISTPoison类中的poi_indices属性表明了哪些是要添加触发器的
         trainset = MNISTPoison(args, args.data_path, train=is_train, download=True, transform=transform)
         nb_classes = 10
     else:
@@ -53,20 +73,4 @@ def build_testset(is_train, args):
 
     return testset_clean, testset_poisoned
 
-def build_transform(dataset):
-    if dataset == "CIFAR10":
-        mean, std = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
-    elif dataset == "MNIST":
-        mean, std = (0.5,), (0.5,)
-    else:
-        raise NotImplementedError()
 
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean, std)
-        ])
-    mean = torch.as_tensor(mean)
-    std = torch.as_tensor(std)
-    detransform = transforms.Normalize((-mean / std).tolist(), (1.0 / std).tolist()) # you can use detransform to recover the image
-    
-    return transform, detransform

@@ -8,6 +8,7 @@ import os
 class TriggerHandler(object):
 
     def __init__(self, trigger_path, trigger_size, trigger_label, img_width, img_height):
+        # 将图像转换为RGB模式
         self.trigger_img = Image.open(trigger_path).convert('RGB')
         self.trigger_size = trigger_size
         self.trigger_img = self.trigger_img.resize((trigger_size, trigger_size))        
@@ -36,6 +37,7 @@ class CIFAR10Poison(CIFAR10):
 
         self.trigger_handler = TriggerHandler( args.trigger_path, args.trigger_size, args.trigger_label, self.width, self.height)
         self.poisoning_rate = args.poisoning_rate if train else 1.0
+        # 包含所有样本的索引 [0, 1, 2, ...,] 
         indices = range(len(self.targets))
         self.poi_indices = random.sample(indices, k=int(len(indices) * self.poisoning_rate))
         print(f"Poison {len(self.poi_indices)} over {len(indices)} samples ( poisoning rate {self.poisoning_rate})")
@@ -97,6 +99,7 @@ class MNISTPoison(MNIST):
 
     def __getitem__(self, index):
         img, target = self.data[index], int(self.targets[index])
+        # 将Pytorch 张量转换成PIL图像对象
         img = Image.fromarray(img.numpy(), mode="L")
         # NOTE: According to the threat model, the trigger should be put on the image before transform.
         # (The attacker can only poison the dataset)
